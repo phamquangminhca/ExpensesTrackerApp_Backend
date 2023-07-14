@@ -1,4 +1,5 @@
 const express = require('express');
+require('./config/dbConnect');
 const usersRoute = require('./routes/users/usersRoute');
 const transactionsRoute = require('./routes/transactions/transactionsRoute');
 const accountsRoute = require('./routes/accounts/accountsRoute');
