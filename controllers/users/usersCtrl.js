@@ -1,17 +1,62 @@
-const registerUserCtrl = async(req, res) => {
+const bcrypt = require('bcryptjs');
+const User = require("../../model/User");
+const { AppErr, appErr } = require('../../utils/appErr');
+
+const registerUserCtrl = async(req, res, next) => {
+    const {fullname, password, email} = req.body;
     try {
+        //check if fields are empty
+        if (!email || !password || !fullname) {
+            return next(appErr('Please provide all fields', 400))
+        }
+
+        //check if email exists
+        const userFound = await User.findOne({email});
+        if (userFound) {
+            return next(new AppErr('User Already Exists', 400))
+        }
+
+        //hash password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        //Create user
+        const user = await User.create({
+            fullname,
+            email,
+            password: hashedPassword,
+        });
+
         res.json({
-            msg: 'Register route'
+            status: 'success',
+            fullname: user.fullname,
+            email: user.email,
+            id: user._id,
         })
     } catch (error) {
-        res.json(error);
+        return next(new Error(error));
     }
 }
 
-const loginUserCtrl = async(req, res) => {
+const loginUserCtrl = async(req, res, next) => {
+    const {email, password} = req.body;
     try {
+        //check if email exists
+        const userFound = await User.findOne({email});
+        if (!userFound) {
+            return next(appErr('Invalid login credentials', 400));
+        }
+
+        //check if password is valid
+        const isPasswordMatched = await bcrypt.compare(password, userFound.password);
+        if(!isPasswordMatched) {
+            return next(new AppErr('Invalid login credentials', 400));
+        }
+
         res.json({
-            msg: 'Login route'
+            status: 'success',
+            fullname: userFound.fullname,
+            id: userFound._id,
         })
     } catch (error) {
         res.json(error);
