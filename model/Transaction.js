@@ -45,6 +45,10 @@ const transactionSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Account',
     },
+    notes: {
+        type: String,
+        required: true,
+    },
     date: {
         type: Date,
         default: Date.now(),
