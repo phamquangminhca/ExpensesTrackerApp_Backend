@@ -2,8 +2,8 @@ const bcrypt = require('bcryptjs');
 const User = require("../../model/User");
 const { AppErr, appErr } = require('../../utils/appErr');
 const generateToken = require('../../utils/generateToken');
-const verifyToken = require('../../utils/verifyToken');
-const getTokenFromHeader = require('../../utils/getTokenFromHeader');
+const Account = require('../../model/Account');
+const Transaction = require('../../model/Transaction');
 
 const registerUserCtrl = async(req, res, next) => {
     const {fullname, password, email} = req.body;
@@ -69,7 +69,13 @@ const loginUserCtrl = async(req, res, next) => {
 
 const getUserProfileCtrl = async(req, res) => {
     try {
-        const user = await User.findById(req.user);
+        const user = await User.findById(req.user).populate({
+            path: 'accounts',
+            populate: {
+                path: 'transactions',
+                'model': 'Transaction'
+            }
+        });
         res.json({
             user
         })
@@ -80,21 +86,61 @@ const getUserProfileCtrl = async(req, res) => {
 
 const deleteUserCtrl = async(req, res) => {
     try {
-        res.json({
-            msg: 'Delete route'
-        })
+        const deletedUser = await User.findByIdAndDelete(req.user);
+        await Account.deleteMany({ createdBy: deletedUser._id  });
+        await Transaction.deleteMany({ createdBy: deletedUser._id });
+        res.status(200).json({
+            status:'success',
+            data: deletedUser,
+        });
     } catch (error) {
-        res.json(error);
+        return next(new AppErr(err, 400));
     }
 }
 
-const updateUserCtrl = async(req, res) => {
+const updateUserCtrl = async(req, res, next) => {
     try {
-        res.json({
-            msg: 'Update route'
-        })
+        const {email, password} = req.body;
+        if (email) {
+            //check if email exists
+            const userFound = await User.findOne({email});
+            const currentUser = await User.findById(req.user);
+            if(userFound && email !== currentUser.email) {
+                return next(new AppErr('Email is already taken', 400));
+            }
+        }
+        
+        //check if user is updating the password
+        if (req.body.password) {
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(password, salt);
+            //update the user
+            const user = await User.findByIdAndUpdate(req.user, {
+                password: hashedPassword,
+            }, {
+                new: true,
+                runValidators: true,
+            });
+
+            //send the response
+            return res.status(200).json({
+                status: 'success',
+                data: user,
+            });
+        }
+
+        const user = await User.findByIdAndUpdate(req.user, req.body, {
+            new: true,
+            runValidators: true,
+        });
+
+        //send the response
+        return res.status(200).json({
+            status: 'success',
+            data: user,
+        });
     } catch (error) {
-        res.json(error);
+        return next(new AppErr(error.message, 500));
     }
 }
 

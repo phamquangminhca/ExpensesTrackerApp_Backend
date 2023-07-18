@@ -41,47 +41,65 @@ const createTransactionsCtrl = async(req, res, next) => {
             data: transaction,
         })
     } catch (error) {
-        res.json(error);
+        return next(new AppErr(err, 400));
     }
 }
 
-const getAllTransactionsCtrl = async(req, res) => {
+const getAllTransactionsCtrl = async(req, res, next) => {
     try {
-        res.json({
-            msg: 'Get All Transactions route'
+        const transactions = await Transaction.find();
+        res.status(200).json({
+            status: 'success',
+            data: transactions,
         })
     } catch (error) {
-        res.json(error);
+        return next(new AppErr(err, 400));
     }
 }
 
-const getSingleTransactionCtrl =  async(req, res) => {
+const getSingleTransactionCtrl =  async(req, res, next) => {
     try {
-        res.json({
-            msg: 'Get Single Transaction route'
+        const {id} = req.params;
+        const transaction = await Transaction.findById(id);
+        res.status(200).json({
+            status: 'success',
+            data: transaction,        
         })
     } catch (error) {
-        res.json(error);
+        return next(new AppErr(err, 400));
     }
 }
 
-const deleteTransactionCtrl = async(req, res) => {
+const deleteTransactionCtrl = async(req, res, next) => {
     try {
-        res.json({
-            msg: 'Delete Transaction route'
-        })
+        const {id} = req.params;
+        const deletedTransaction = await Transaction.findByIdAndDelete(id);
+        await Account.updateOne(
+            { _id: deletedTransaction.account },
+            { $pull: { transactions: id } }
+        );
+        res.status(200).json({
+            status: 'success',
+            data: deletedTransaction
+        });
     } catch (error) {
-        res.json(error);
+        return next(new AppErr(err, 400));
     }
 }
 
-const updateTransactionCtrl = async(req, res) => {
+const updateTransactionCtrl = async(req, res, next) => {
     try {
+        const {id} = req.params;
+        const transaction = await Transaction.findByIdAndUpdate(id, req.body, {
+            new: true,
+            runValidators: true,
+        })
         res.json({
-            msg: 'Update Transaction route'
+            status: 'success',
+            data: transaction,
         })
     } catch (error) {
-        res.json(error);
+        return next(new AppErr(err, 400));
     }
 }
 

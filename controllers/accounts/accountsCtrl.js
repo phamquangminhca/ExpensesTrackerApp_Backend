@@ -1,4 +1,5 @@
 const Account = require("../../model/Account");
+const Transaction = require("../../model/Transaction");
 const User = require("../../model/User");
 const { AppErr } = require("../../utils/appErr");
 
@@ -35,44 +36,62 @@ const createAccountCtrl = async(req, res, next) => {
     }
 }
 
-const getAllAccountsCtrl = async(req, res) => {
+const getAllAccountsCtrl = async(req, res, next) => {
     try {
         const accounts = await Account.find().populate('transactions');
         res.json({
             accounts,
         })
     } catch (error) {
-        res.json(error);
+        return next( new AppErr(error, 404));
     }
 }
 
-const getSingleAccountCtrl = async(req, res) => {
+const getSingleAccountCtrl = async(req, res, next) => {
     try {
+        //find the id from params
+        const {id} = req.params;
+        const account = await Account.findById(id).populate('transactions');
         res.json({
-            msg: 'Get single Account route'
+            status: 'success',
+            data: account,
         })
     } catch (error) {
-        res.json(error);
+        return next( new AppErr(error, 404));
     }
 }
 
-const deleteAccountCtrl = async(req, res) => {
+const deleteAccountCtrl = async(req, res, next) => {
     try {
-        res.json({
-            msg: 'Delete Account route'
+        const {id} = req.params;
+        const deletedAccount = await Account.findByIdAndDelete(id);
+        await User.updateOne(
+            { _id: req.user },
+            { $pull: { accounts: id } }
+        );
+        const deletedTransaction = await Transaction.deleteMany({ account: deletedAccount._id });
+        res.status(200).json({
+            status: 'success',
+            data: deletedAccount
         })
     } catch (error) {
-        res.json(error);
+        return next( new AppErr(error, 404));
     }
 }
 
-const updateAccountCtrl = async(req, res) => {
+const updateAccountCtrl = async(req, res, next) => {
     try {
+        const {id} = req.params;
+        const account = await Account.findByIdAndUpdate(id, req.body, {
+            new: true,
+            runValidators: true,
+        })
         res.json({
-            msg: 'Update Account route'
+            status: 'success',
+            data: account,
         })
     } catch (error) {
-        res.json(error);
+        return next( new AppErr(error, 500));
     }
 }
 

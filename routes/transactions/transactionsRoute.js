@@ -14,7 +14,7 @@ transactionsRoute.get('/', getAllTransactionsCtrl);
 transactionsRoute.get('/:id', getSingleTransactionCtrl);
 
 //DELETE/api/v1/transactions/:id
-transactionsRoute.delete('/:id', deleteTransactionCtrl);
+transactionsRoute.delete('/:id', isLoggedIn, deleteTransactionCtrl);
 
 //PUT/api/v1/transactions/:id
 transactionsRoute.put('/:id', updateTransactionCtrl);

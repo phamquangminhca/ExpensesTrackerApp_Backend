@@ -14,9 +14,9 @@ accountsRoute.get('/', getAllAccountsCtrl);
 accountsRoute.get('/:id', getSingleAccountCtrl);
 
 //DELETE/api/v1/accounts/:id
-accountsRoute.delete('/:id', deleteAccountCtrl);
+accountsRoute.delete('/:id', isLoggedIn, deleteAccountCtrl);
 
 //PUT/api/v1/accounts/:id
-accountsRoute.put('/:id', updateAccountCtrl);
+accountsRoute.put('/:id', isLoggedIn, updateAccountCtrl);
 
 module.exports = accountsRoute;
