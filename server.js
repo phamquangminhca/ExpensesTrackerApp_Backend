@@ -4,11 +4,14 @@ const usersRoute = require('./routes/users/usersRoute');
 const transactionsRoute = require('./routes/transactions/transactionsRoute');
 const accountsRoute = require('./routes/accounts/accountsRoute');
 const globalErrHandler = require('./middlewares/globalErrHandler');
+const cors = require('cors');
 
 const app = express();
 
 //middlewares
 app.use(express.json()); //pass incoming data
+
+app.use(cors());
 
 //routes
 
