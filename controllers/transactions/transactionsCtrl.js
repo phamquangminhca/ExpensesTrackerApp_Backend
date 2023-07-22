@@ -5,7 +5,7 @@ const { AppErr } = require("../../utils/appErr");
 
 
 const createTransactionsCtrl = async(req, res, next) => {
-    const {name, transactionType, amount, category, account, notes} = req.body;
+    const {name, transactionType, amount, category, account, notes, color, date} = req.body;
     try {
         //find user
         const userFound = await User.findById(req.user);
@@ -27,7 +27,7 @@ const createTransactionsCtrl = async(req, res, next) => {
             category,
             account,
             createdBy: req.user,
-            notes
+            notes,
         });
 
         //push the transaction to the account
@@ -41,7 +41,7 @@ const createTransactionsCtrl = async(req, res, next) => {
             data: transaction,
         })
     } catch (error) {
-        return next(new AppErr(err, 400));
+        return next(new AppErr(error, 400));
     }
 }
 
